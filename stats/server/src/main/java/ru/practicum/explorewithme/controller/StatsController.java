@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.explorewithme.dto.EndpointHitDto;
 import ru.practicum.explorewithme.dto.ViewStatsDto;
 import ru.practicum.explorewithme.service.EndpointHitService;
+import ru.practicum.explorewithme.utils.DateTimeUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,8 +32,8 @@ public class StatsController {
 	}
 
 	@GetMapping("/stats")
-	public ResponseEntity<List<ViewStatsDto>> stats(@RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime start,
-													@RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime end,
+	public ResponseEntity<List<ViewStatsDto>> stats(@RequestParam @DateTimeFormat(pattern = DateTimeUtils.DATE_TIME_PATTERN) LocalDateTime start,
+													@RequestParam @DateTimeFormat(pattern = DateTimeUtils.DATE_TIME_PATTERN) LocalDateTime end,
 													@RequestParam(required = false) List<String> uris,
 													@RequestParam(defaultValue = "false") Boolean unique) {
 		log.info("Поступил запрос GET /stats. Параметры запроса: start = {}; end = {}; unique = {}; uris = {}", start, end, uris, unique);
