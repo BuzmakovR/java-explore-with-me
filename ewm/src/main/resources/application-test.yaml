@@ -1,2 +1,2 @@
 stats-service:
-  url: http://localhost:9090
+  url: http://stats-service-container:9090

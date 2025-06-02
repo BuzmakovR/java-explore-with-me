@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.practicum.explorewithme.dto.EndpointHitDto;
 import ru.practicum.explorewithme.dto.ViewStatsDto;
+import ru.practicum.explorewithme.exception.ValidationException;
 import ru.practicum.explorewithme.mapper.EndpointHitMapper;
 import ru.practicum.explorewithme.mapper.ViewStatsMapper;
 import ru.practicum.explorewithme.repository.EndpointHitRepository;
@@ -26,6 +27,9 @@ public class EndpointHitServiceImpl implements EndpointHitService {
 
 	@Override
 	public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
+		if (start.equals(end) || start.isAfter(end)) {
+			throw new ValidationException("Некорректный промежуток дат");
+		}
 		return unique
 				? endpointHitRepository.getStatsUniqie(start, end, uris).stream()
 				.map(ViewStatsMapper::toViewStatsDto)
