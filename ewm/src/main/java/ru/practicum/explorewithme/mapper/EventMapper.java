@@ -56,6 +56,7 @@ public class EventMapper {
 				.state(EventStates.PENDING)
 				.createdOn(LocalDateTime.now())
 				.requestModeration(newEventDto.getRequestModeration() == null || newEventDto.getRequestModeration())
+				.views(0L)
 				.build();
 	}
 
