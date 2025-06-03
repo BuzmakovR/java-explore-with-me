@@ -453,7 +453,10 @@
 									"pm.test(\"Данные события должны соотвествовать\", function () {\r",
 									"    pm.expect(source.eventId).equal(target.event.id, 'Идентификатор события должен соответствовать переданному значению');\r",
 									"});\r",
-									""
+									"\r",
+									"pm.test(\"Данные события должны содержать количество коментариев\", function () {\r",
+									"    pm.expect(target.event).to.have.property('commentsCount');\r",
+									"});"
 								],
 								"type": "text/javascript",
 								"packages": {}
@@ -587,6 +590,10 @@
 									"\r",
 									"pm.test(\"Данные события должны соотвествовать\", function () {\r",
 									"    pm.expect(source.event.id).equal(target[0].event.id, 'Идентификатор события должен соответствовать переданному значению');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Данные события должны содержать количество коментариев\", function () {\r",
+									"    pm.expect(target[0].event).to.have.property('commentsCount');\r",
 									"});\r",
 									""
 								],
@@ -727,6 +734,10 @@
 									"pm.test(\"Данные события должны соотвествовать\", function () {\r",
 									"    pm.expect(source.event.id).equal(target[0].event.id, 'Идентификатор события должен соответствовать переданному значению');\r",
 									"});\r",
+									"\r",
+									"pm.test(\"Данные события должны содержать количество коментариев\", function () {\r",
+									"    pm.expect(target[0].event).to.have.property('commentsCount');\r",
+									"});\r",
 									""
 								],
 								"type": "text/javascript",
@@ -864,6 +875,10 @@
 									"\r",
 									"pm.test(\"Данные события должны соотвествовать\", function () {\r",
 									"    pm.expect(source.event.id).equal(target.event.id, 'Идентификатор события должен соответствовать переданному значению');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Данные события должны содержать количество коментариев\", function () {\r",
+									"    pm.expect(target.event).to.have.property('commentsCount');\r",
 									"});\r",
 									""
 								],
@@ -1005,6 +1020,10 @@
 									"\r",
 									"pm.test(\"Данные события должны соотвествовать\", function () {\r",
 									"    pm.expect(source.event.id).equal(target.event.id, 'Идентификатор события должен соответствовать переданному значению');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Данные события должны содержать количество коментариев\", function () {\r",
+									"    pm.expect(target.event).to.have.property('commentsCount');\r",
 									"});\r",
 									""
 								],
@@ -1280,7 +1299,10 @@
 									"pm.test(\"Данные события должны соотвествовать\", function () {\r",
 									"    pm.expect(responseData.event.id).equal(target.event.id, 'Идентификатор события должен соответствовать переданному значению');\r",
 									"});\r",
-									""
+									"\r",
+									"pm.test(\"Данные события должны содержать количество коментариев\", function () {\r",
+									"    pm.expect(target.event).to.have.property('commentsCount');\r",
+									"});"
 								],
 								"type": "text/javascript",
 								"packages": {}

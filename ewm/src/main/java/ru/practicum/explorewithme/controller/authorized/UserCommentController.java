@@ -51,7 +51,7 @@ public class UserCommentController {
 	}
 
 	@DeleteMapping("/{commentId}")
-	public void update(@PathVariable Long userId,
+	public void delete(@PathVariable Long userId,
 					   @PathVariable Long commentId) {
 		log.info("Поступил запрос DELETE /users/{userId}/comments/{commentId}. Параметры запроса: userId = {}; commentId = {}", userId, commentId);
 		commentService.delete(userId, commentId);

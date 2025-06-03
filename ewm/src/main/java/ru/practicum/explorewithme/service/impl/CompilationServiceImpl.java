@@ -13,6 +13,8 @@ import ru.practicum.explorewithme.exception.NotFoundException;
 import ru.practicum.explorewithme.mapper.CompilationMapper;
 import ru.practicum.explorewithme.model.Compilation;
 import ru.practicum.explorewithme.model.Event;
+import ru.practicum.explorewithme.model.EventCommentCount;
+import ru.practicum.explorewithme.repository.CommentRepository;
 import ru.practicum.explorewithme.repository.CompilationRepository;
 import ru.practicum.explorewithme.repository.EventRepository;
 import ru.practicum.explorewithme.service.CompilationService;
@@ -20,7 +22,9 @@ import ru.practicum.explorewithme.service.CompilationService;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,21 +36,20 @@ public class CompilationServiceImpl implements CompilationService {
 
 	private final EventRepository eventRepository;
 
+	private final CommentRepository commentRepository;
+
 	@Override
 	public List<CompilationDto> get(Boolean pinned, Integer from, Integer size) {
 		Pageable pageable = Pageable.ofSize(size).withPage(from / size);
 		Page<Compilation> compilationByPage = compilationRepository.findAll(pageable);
 		List<Compilation> compilations = compilationByPage.hasContent() ? compilationByPage.getContent() : Collections.emptyList();
-		return compilations.stream()
-				.map(CompilationMapper::toCompilationDto)
-				.toList();
+		return getCompilationsDto(compilations);
 	}
 
 	@Override
 	public CompilationDto get(Long compilationId) {
-		return CompilationMapper.toCompilationDto(
-				getCompilation(compilationId)
-		);
+		Compilation compilation = getCompilation(compilationId);
+		return getCompilationsDto(List.of(compilation)).getFirst();
 	}
 
 	@Override
@@ -56,12 +59,8 @@ public class CompilationServiceImpl implements CompilationService {
 		if (newCompilationDto.getEvents() != null && !newCompilationDto.getEvents().isEmpty()) {
 			events = eventRepository.findAllByIdIn(newCompilationDto.getEvents());
 		}
-
-		return CompilationMapper.toCompilationDto(
-				compilationRepository.save(
-						CompilationMapper
-								.fromNewCompilationDto(newCompilationDto, events))
-		);
+		Compilation compilation = compilationRepository.save(CompilationMapper.fromNewCompilationDto(newCompilationDto, events));
+		return getCompilationsDto(List.of(compilation)).getFirst();
 	}
 
 	@Override
@@ -83,8 +82,8 @@ public class CompilationServiceImpl implements CompilationService {
 		if (updateCompilationRequest.getPinned() != null) {
 			compilation.setPinned(updateCompilationRequest.getPinned());
 		}
-
-		return CompilationMapper.toCompilationDto(compilationRepository.save(compilation));
+		compilation = compilationRepository.saveAndFlush(compilation);
+		return getCompilationsDto(List.of(compilation)).getFirst();
 	}
 
 	@Override
@@ -108,5 +107,28 @@ public class CompilationServiceImpl implements CompilationService {
 				|| compilations.stream().anyMatch(c -> compilationId.equals(c.getId())))) {
 			throw new ConditionsNotMetException("Подборка с таким названием уже существует: " + title);
 		}
+	}
+
+	private Map<Long, Long> getEventCommentCount(List<Event> events) {
+		Set<Long> eventIds = events.stream()
+				.map(Event::getId)
+				.collect(Collectors.toSet());
+		return getEventCommentCount(eventIds);
+	}
+
+	private Map<Long, Long> getEventCommentCount(Set<Long> eventIds) {
+		return commentRepository.getEventsCommentCount(eventIds).stream()
+				.collect(Collectors.toMap(EventCommentCount::getEventId, EventCommentCount::getCommentCount));
+	}
+
+	private List<CompilationDto> getCompilationsDto(List<Compilation> compilations) {
+		Set<Event> events = new HashSet<>();
+		compilations.forEach(compilation -> {
+			events.addAll(compilation.getEvents());
+		});
+		Map<Long, Long> eventCommentCounts = getEventCommentCount(events.stream().toList());
+		return compilations.stream()
+				.map(compilation -> CompilationMapper.toCompilationDto(compilation, eventCommentCounts))
+				.toList();
 	}
 }

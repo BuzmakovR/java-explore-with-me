@@ -36,11 +36,11 @@ public class CommentMapper {
 				.build();
 	}
 
-	public static CommentDto toCommentDto(Comment comment) {
+	public static CommentDto toCommentDto(Comment comment, Long commentCountToEvent) {
 		return CommentDto.builder()
 				.id(comment.getId())
 				.author(UserMapper.toUserShortDto(comment.getAuthor()))
-				.event(EventMapper.toEventShortDto(comment.getEvent()))
+				.event(EventMapper.toEventShortDto(comment.getEvent(), commentCountToEvent))
 				.text(comment.getText())
 				.created(comment.getCreated())
 				.edited(comment.getEdited())

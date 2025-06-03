@@ -20,8 +20,10 @@ import ru.practicum.explorewithme.exception.ValidationException;
 import ru.practicum.explorewithme.mapper.EventMapper;
 import ru.practicum.explorewithme.model.Category;
 import ru.practicum.explorewithme.model.Event;
+import ru.practicum.explorewithme.model.EventCommentCount;
 import ru.practicum.explorewithme.model.User;
 import ru.practicum.explorewithme.repository.CategoryRepository;
+import ru.practicum.explorewithme.repository.CommentRepository;
 import ru.practicum.explorewithme.repository.EventRepository;
 import ru.practicum.explorewithme.repository.UserRepository;
 import ru.practicum.explorewithme.service.EventService;
@@ -30,7 +32,10 @@ import ru.practicum.explorewithme.utils.DateTimeUtils;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -49,6 +54,8 @@ public class EventServiceImpl implements EventService {
 
 	private final CategoryRepository categoryRepository;
 
+	private final CommentRepository commentRepository;
+
 	private final StatsClient statsClient;
 
 	@Override
@@ -56,7 +63,7 @@ public class EventServiceImpl implements EventService {
 		Event event = eventRepository.findByIdAndState(eventId, EventStates.PUBLISHED)
 				.orElseThrow(() -> new NotFoundException(NOT_FOUND_EVENT_BY_ID, eventId));
 		updateView(event);
-		return EventMapper.toEventFullDto(event);
+		return getEventsFullDto(List.of(event)).getFirst();
 	}
 
 	@Override
@@ -65,9 +72,7 @@ public class EventServiceImpl implements EventService {
 		Pageable pageable = Pageable.ofSize(size).withPage(from / size);
 		Page<Event> eventsByPage = eventRepository.findAllByInitiatorId(userId, pageable);
 		List<Event> events = eventsByPage.hasContent() ? eventsByPage.getContent() : Collections.emptyList();
-		return events.stream()
-				.map(EventMapper::toEventShortDto)
-				.toList();
+		return getEventsShortDto(events);
 	}
 
 	@Override
@@ -82,9 +87,7 @@ public class EventServiceImpl implements EventService {
 				pageable
 		);
 		List<Event> events = eventsByPage.hasContent() ? eventsByPage.getContent() : Collections.emptyList();
-		return events.stream()
-				.map(EventMapper::toEventFullDto)
-				.toList();
+		return getEventsFullDto(events);
 	}
 
 	@Override
@@ -94,28 +97,27 @@ public class EventServiceImpl implements EventService {
 			throw new ValidationException("Дата начала не должна быть позже даты окончания");
 		}
 		Pageable pageable = Pageable.ofSize(filters.getSize()).withPage(filters.getFrom() / filters.getSize());
-		return eventRepository.findAllByFilters(
-						filters.getText(),
-						filters.getPaid(),
-						filters.getCategories(),
-						filters.getRangeStart(),
-						filters.getRangeEnd(),
-						filters.getOnlyAvailable(),
-						filters.getSort().name(),
-						EventStates.PUBLISHED,
-						LocalDateTime.now(),
-						pageable
-				)
-				.stream()
-				.map(EventMapper::toEventShortDto)
-				.toList();
+		List<Event> events = eventRepository.findAllByFilters(
+				filters.getText(),
+				filters.getPaid(),
+				filters.getCategories(),
+				filters.getRangeStart(),
+				filters.getRangeEnd(),
+				filters.getOnlyAvailable(),
+				filters.getSort().name(),
+				EventStates.PUBLISHED,
+				LocalDateTime.now(),
+				pageable
+		);
+		return getEventsShortDto(events);
 	}
 
 	@Override
 	public EventFullDto getById(Long userId, Long eventId) {
 		getUser(userId);
-		return EventMapper.toEventFullDto(eventRepository.findByIdAndInitiatorId(eventId, userId)
-				.orElseThrow(() -> new NotFoundException(NOT_FOUND_EVENT_BY_ID, eventId)));
+		Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
+				.orElseThrow(() -> new NotFoundException(NOT_FOUND_EVENT_BY_ID, eventId));
+		return getEventsFullDto(List.of(event)).getFirst();
 	}
 
 	@Override
@@ -123,7 +125,7 @@ public class EventServiceImpl implements EventService {
 		User user = getUser(userId);
 		Category category = getCategory(newEventDto.getCategory());
 		Event event = EventMapper.fromNewEventDto(newEventDto, user, category);
-		return EventMapper.toEventFullDto(eventRepository.saveAndFlush(event));
+		return EventMapper.toEventFullDto(eventRepository.saveAndFlush(event), 0L);
 	}
 
 	@Override
@@ -132,10 +134,11 @@ public class EventServiceImpl implements EventService {
 		Event event = getEvent(eventId);
 		Category category = null;
 		if (updateEventUserRequest.getCategory() != null) {
-			getCategory(updateEventUserRequest.getCategory());
+			category = getCategory(updateEventUserRequest.getCategory());
 		}
 		event = EventMapper.fromUpdateEventUserRequest(userId, event, updateEventUserRequest, category);
-		return EventMapper.toEventFullDto(eventRepository.saveAndFlush(event));
+		event = eventRepository.saveAndFlush(event);
+		return getEventsFullDto(List.of(event)).getFirst();
 	}
 
 	@Override
@@ -146,7 +149,8 @@ public class EventServiceImpl implements EventService {
 			category = getCategory(updateEventAdminRequest.getCategory());
 		}
 		event = EventMapper.fromUpdateEventAdminRequest(event, updateEventAdminRequest, category);
-		return EventMapper.toEventFullDto(eventRepository.saveAndFlush(event));
+		event = eventRepository.saveAndFlush(event);
+		return getEventsFullDto(List.of(event)).getFirst();
 	}
 
 	private User getUser(Long userId) {
@@ -179,6 +183,34 @@ public class EventServiceImpl implements EventService {
 				List.of("/events/" + id),
 				true);
 		return stats.isEmpty() ? 0L : stats.getFirst().getHits();
+	}
+
+	private Map<Long, Long> getEventCommentCount(List<Event> events) {
+		Set<Long> eventIds = events.stream()
+				.map(Event::getId)
+				.collect(Collectors.toSet());
+		return commentRepository.getEventsCommentCount(eventIds).stream()
+				.collect(Collectors.toMap(EventCommentCount::getEventId, EventCommentCount::getCommentCount));
+	}
+
+	private List<EventShortDto> getEventsShortDto(List<Event> events) {
+		Map<Long, Long> eventCommentCounts = getEventCommentCount(events);
+		return events.stream()
+				.map(event ->
+						EventMapper.toEventShortDto(event, eventCommentCounts
+								.getOrDefault(event.getId(), 0L))
+				)
+				.toList();
+	}
+
+	private List<EventFullDto> getEventsFullDto(List<Event> events) {
+		Map<Long, Long> eventCommentCounts = getEventCommentCount(events);
+		return events.stream()
+				.map(event ->
+						EventMapper.toEventFullDto(event, eventCommentCounts
+								.getOrDefault(event.getId(), 0L))
+				)
+				.toList();
 	}
 
 }

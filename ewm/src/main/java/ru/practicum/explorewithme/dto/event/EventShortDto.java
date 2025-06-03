@@ -35,4 +35,6 @@ public class EventShortDto {
 	private Long confirmedRequests;
 
 	private Long views;
+
+	private Long commentsCount;
 }
