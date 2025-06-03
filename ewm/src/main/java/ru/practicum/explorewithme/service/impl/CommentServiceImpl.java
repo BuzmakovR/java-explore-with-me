@@ -57,14 +57,15 @@ public class CommentServiceImpl implements CommentService {
 	@Override
 	public List<CommentDto> getByEventId(Long eventId, Integer from, Integer size) {
 		getEvent(eventId);
-		Pageable pageable = Pageable.ofSize(size).withPage(from / size);
-		Page<Comment> commentsByPage = commentRepository.findAllByEventId(eventId, pageable);
-		List<Comment> comments = commentsByPage.hasContent() ? commentsByPage.getContent() : Collections.emptyList();
-		long initCommentCountToEvent = 0L;
-		if (!comments.isEmpty()) {
-			initCommentCountToEvent = commentRepository.countByEventId(eventId);
+		List<Comment> comments = Collections.emptyList();
+		final long commentCountToEvent = commentRepository.countByEventId(eventId);
+		if (commentCountToEvent > 0) {
+			Pageable pageable = Pageable.ofSize(size).withPage(from / size);
+			Page<Comment> commentsByPage = commentRepository.findAllByEventId(eventId, pageable);
+			if (commentsByPage.hasContent()) {
+				comments = commentsByPage.getContent();
+			}
 		}
-		final Long commentCountToEvent = initCommentCountToEvent;
 		return comments.stream()
 				.map(comment -> CommentMapper.toCommentDto(comment, commentCountToEvent))
 				.toList();
