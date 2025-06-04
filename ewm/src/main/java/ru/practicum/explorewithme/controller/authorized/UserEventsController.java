@@ -60,7 +60,7 @@ public class UserEventsController {
 	@PatchMapping("/{eventId}/requests")
 	public EventRequestStatusUpdateResult updateEventRequestsStatus(@PathVariable Long userId,
 																	@PathVariable Long eventId,
-																	@RequestBody EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest) {
+																	@Valid @RequestBody EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest) {
 		log.info("Поступил запрос PATCH /users/{userId}/events/{eventId}/requests. Параметры запроса: userId = {}; eventId = {}; eventRequestStatusUpdateRequest = {}", userId, eventId, eventRequestStatusUpdateRequest);
 		return participationRequestService.updateEventRequestsStatus(userId, eventId, eventRequestStatusUpdateRequest);
 	}

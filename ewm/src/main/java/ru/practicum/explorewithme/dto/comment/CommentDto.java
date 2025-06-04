@@ -1,11 +1,11 @@
-package ru.practicum.explorewithme.dto.event;
+package ru.practicum.explorewithme.dto.comment;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.practicum.explorewithme.dto.category.CategoryDto;
+import ru.practicum.explorewithme.dto.event.EventShortDto;
 import ru.practicum.explorewithme.dto.user.UserShortDto;
 import ru.practicum.explorewithme.utils.DateTimeUtils;
 
@@ -15,26 +15,20 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class EventShortDto {
+public class CommentDto {
 
 	private Long id;
 
-	private UserShortDto initiator;
+	private EventShortDto event;
 
-	private String annotation;
+	private UserShortDto author;
 
-	private String title;
-
-	private CategoryDto category;
+	private String text;
 
 	@JsonFormat(pattern = DateTimeUtils.DATE_TIME_PATTERN)
-	private LocalDateTime eventDate;
+	private LocalDateTime created;
 
-	private Boolean paid;
+	@JsonFormat(pattern = DateTimeUtils.DATE_TIME_PATTERN)
+	private LocalDateTime edited;
 
-	private Long confirmedRequests;
-
-	private Long views;
-
-	private Long commentsCount;
 }

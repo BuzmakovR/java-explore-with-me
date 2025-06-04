@@ -56,6 +56,7 @@ public class EventMapper {
 				.state(EventStates.PENDING)
 				.createdOn(LocalDateTime.now())
 				.requestModeration(newEventDto.getRequestModeration() == null || newEventDto.getRequestModeration())
+				.views(0L)
 				.build();
 	}
 
@@ -187,7 +188,7 @@ public class EventMapper {
 		return newEvent;
 	}
 
-	public static EventShortDto toEventShortDto(Event event) {
+	public static EventShortDto toEventShortDto(Event event, Long commentsCount) {
 		return EventShortDto.builder()
 				.id(event.getId())
 				.initiator(UserMapper.toUserShortDto(event.getInitiator()))
@@ -198,10 +199,11 @@ public class EventMapper {
 				.paid(event.getPaid())
 				.confirmedRequests(event.getConfirmedRequests())
 				.views(event.getViews())
+				.commentsCount(commentsCount)
 				.build();
 	}
 
-	public static EventFullDto toEventFullDto(Event event) {
+	public static EventFullDto toEventFullDto(Event event, Long commentsCount) {
 		return EventFullDto.builder()
 				.id(event.getId())
 				.initiator(UserMapper.toUserShortDto(event.getInitiator()))
@@ -218,6 +220,7 @@ public class EventMapper {
 				.participantLimit(event.getParticipantLimit())
 				.confirmedRequests(event.getConfirmedRequests())
 				.views(event.getViews())
+				.commentsCount(commentsCount)
 				.requestModeration(event.getRequestModeration())
 				.state(event.getState())
 				.createdOn(event.getCreatedOn())

@@ -43,6 +43,8 @@ public class EventFullDto {
 
 	private Long views;
 
+	private Long commentsCount;
+
 	private Boolean requestModeration;
 
 	private EventStates state;
